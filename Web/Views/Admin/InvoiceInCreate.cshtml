@@ -1,0 +1,237 @@
+﻿@model InvoiceInInvoiceInLineModel
+<div class="row">
+    <div class="col-md-6">
+        <h5>Invoice In</h5><hr />
+        <form  method="post">
+            <div class="form-group">
+                <label>Invoice Number</label>
+                <input type="text" asp-for="@Model.InvoiceIn.InvoiceNo" id="invoiceNo" class="form-control" />
+                <span asp-validation-for="@Model.InvoiceIn.InvoiceNo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" asp-for="@Model.InvoiceIn.Date" id="date" class="form-control" />
+                <span asp-validation-for="@Model.InvoiceIn.Date" class="text-danger"></span>
+            </div>
+           
+            <label>Firm Name</label>
+            <select name="firmName" id="firmName" class="custom-select mb-3">
+                @if (ViewBag.Firms != null)
+                {
+                    var Firms = JsonConvert.DeserializeObject<List<Firm>>(ViewBag.Firms);
+                    @foreach (var firm in Firms)
+                    {
+                         <option value="@firm.FirmName">@firm.FirmName</option>
+                    }
+                }
+
+            </select>
+            <label>User Name</label>
+            <select name="userName" id="userName" class="custom-select mb-3">
+                @if (ViewBag.Users != null)
+                {
+                    var Users = JsonConvert.DeserializeObject<List<User>>(ViewBag.Users);
+                    @foreach (var user in Users)
+                    {
+                <option value="@user.UserName">@user.UserName</option>
+                    }
+                }
+            </select>
+            <div class="custom-checkbox custom-control">
+                <input type="checkbox"  id="invoiceInStatus" class="custom-control-input" />
+                <label for="invoiceInStatus" class="custom-control-label">Status</label>
+            </div> 
+            <button type="button" id="create" class="btn btn-primary">Create</button>
+        </form>
+    </div>
+
+    <div class="col-md-6">
+        <h5>Invoice In Line</h5><hr />
+        <form>
+            <label>Expence</label>
+            <select id="expance" class="custom-select mb-3">
+                @if (ViewBag.Expences != null)
+                {
+                    var Expences = JsonConvert.DeserializeObject<List<Expence>>(ViewBag.Expences);
+                    @foreach (var expence in Expences)
+                    {
+                <option asp-for="@expence.ExpenceName">@expence.ExpenceName</option>
+                    }
+                }
+            </select>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input id="quantity" type="number" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Price</label>
+                <input id="price" type="number" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Total</label>
+                <input id="total" type="number" class="form-control" />
+            </div>
+            <div class="custom-checkbox custom-control">
+                <input type="checkbox" id="status2" class="custom-control-input" />
+                <label for="status2" class="custom-control-label">Status</label>
+            </div>
+            <button type="button" id="addDetails" class="btn btn-primary">Add</button>
+        </form>
+    </div>
+</div>
+<div class="row" id="table">
+    <div class="col-md-12">
+        <table class="table table-bordered">
+            <thead>
+                <tr>    
+                    <th>Expence</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+
+    load();
+    var addDetails = document.querySelector("#addDetails");
+    var total = document.querySelector("#total");
+    var price = document.querySelector("#price");
+    var quantity = document.querySelector("#quantity");
+    var createBtn = document.querySelector("#create");
+    var invoiceNo = document.querySelector("#invoiceNo");
+    var date = document.querySelector("#date");
+    var firmName = document.querySelector("#firmName");
+    var userName = document.querySelector("#userName");
+    var expence = document.querySelector("#expance");
+    var lineStatus = document.querySelector("#status2");
+    var invoiceInStatus = document.querySelector("#invoiceInStatus");
+    var tableRow = document.querySelector("table");
+    price.addEventListener("keyup", calculateTotal);
+    quantity.addEventListener("keyup", calculateTotal);
+    createBtn.addEventListener("click", postRequest);
+
+    function calculateTotal(){
+     total.value = document.querySelector("#price").value * document.querySelector("#quantity").value;
+    }
+    addDetails.addEventListener("click", (e) => {
+        e.preventDefault();
+        var invoiceinline = new InvoiceInLine(expence.value, parseFloat(price.value), parseInt(quantity.value), parseFloat(total.value), Boolean(lineStatus.checked));
+        AddLS(invoiceinline);
+        clearInputs();
+    });
+    function deleteItem(id) {
+        list = getLS();
+        list.forEach((n, m) => {
+            if (n.id == id) {
+                list.splice(m, 1);
+                localStorage.setItem("invoiceInLine", JSON.stringify(list));
+                load();
+            }
+        });
+    }
+    function getLS() {
+        list = JSON.parse(localStorage.getItem("invoiceInLine"));
+        if (list===null) {
+            list= [];
+        }
+        return list;
+    }
+    function AddLS(item) {
+        list = getLS();
+        list.push(item);
+        localStorage.setItem("invoiceInLine",JSON.stringify(list));
+        load();
+    }
+    function load() {
+        list = getLS();
+        var html="";
+            list.forEach(i => {
+                html += `
+                 <tr>
+                   <td>${i.expence}</td>
+                   <td>${i.quantity}</td>
+                   <td>${i.price}</td>
+                   <td>${i.total}</td>
+                   <td>${i.status}</td>
+                   <td><button type="button" onclick="deleteItem(${i.id})" class="btn btn-danger">Delete</button></td>
+                </tr>
+                  `;
+            });
+            document.querySelector("tbody").innerHTML = html;
+        tableIsShow();
+    }
+    class InvoiceInLine {
+        id;
+        expence;
+        price;
+        quantity;
+        total;
+        status;
+        constructor(expence, price, quantity, total, status) {
+            this.expence = expence;
+            this.price = price;
+            this.total = total;
+            this.quantity = quantity;
+            this.status = status;
+            this.id = Math.floor(Math.random() * 100);
+        }
+        
+    }
+    function postRequest(e) {
+        e.preventDefault();
+        var InvoiceInInvoiceInLineModel = {
+            InvoiceIn: {
+                "InvoiceNo": invoiceNo.value,
+                "Date": new Date(date.value),
+                "FirmName": firmName.value,
+                "UserName": userName.value,
+                "Status": invoiceInStatus.checked,
+            },
+            InvoiceInLine: getLS()
+        };
+        var req = {
+            method: "POST",
+            body: JSON.stringify(InvoiceInInvoiceInLineModel),
+            headers: { "content-type": "application/json" }
+        };
+        fetch("https://localhost:5001/admin/InvoiceInCreate", req)
+            .then(response => {
+                if (response.ok) {
+                    alert("Successfully added");
+                }
+            })
+            .catch(error => console.log(error));
+        clearInputs();
+        localStorage.removeItem("invoiceInLine");
+        load();
+    }
+    function clearInputs() {
+        invoiceNo.value = "";
+        date.value = "";
+        firmName.value = "";
+        userName.value = "";
+        invoiceInStatus.checked = false;
+        expence.value = "";
+        quantity.value = "";
+        price.value = "";
+        total.value = "";
+        lineStatus.checked = false;
+    }
+    function tableIsShow() {
+        var length = getLS();
+        if (length.length==0) {
+            document.getElementById("table").style.display = "none";
+        }
+        else {
+            document.getElementById("table").style.display = "block";
+        }
+    }
+</script>
