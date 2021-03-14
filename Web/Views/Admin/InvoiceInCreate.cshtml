@@ -18,6 +18,7 @@
             <select name="firmName" id="firmName" class="custom-select mb-3">
                 @if (ViewBag.Firms != null)
                 {
+
                     var Firms = JsonConvert.DeserializeObject<List<Firm>>(ViewBag.Firms);
                     @foreach (var firm in Firms)
                     {
