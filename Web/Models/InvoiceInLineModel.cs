@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Entity;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,7 +10,8 @@ namespace Web.Models
     public class InvoiceInLineModel
     {
         public int InvoiceInLineId { get; set; }
-        public string Expence { get; set; }
+        public int ExpenceId { get; set; }
+        public Expence Expence { get; set; }
         [Required]
         public int Quantity { get; set; }
         [Required]

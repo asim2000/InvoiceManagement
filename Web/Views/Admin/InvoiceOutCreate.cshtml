@@ -12,25 +12,25 @@
             </div>
 
             <label>Firm Name</label>
-            <select name="firmName" id="firmName" class="custom-select mb-3">
+            <select name="firmId" id="firmId" class="custom-select mb-3">
                 @if (ViewBag.Firms != null)
                 {
                     var Firms = JsonConvert.DeserializeObject<List<Firm>>(ViewBag.Firms);
                     @foreach (var firm in Firms)
                     {
-                        <option value="@firm.FirmName">@firm.FirmName</option>
+                        <option value="@firm.FirmId">@firm.FirmName</option>
                     }
                 }
 
             </select>
             <label>User Name</label>
-            <select name="userName" id="userName" class="custom-select mb-3">
+            <select name="userId" id="userId" class="custom-select mb-3">
                 @if (ViewBag.Users != null)
                 {
-                    var Users = JsonConvert.DeserializeObject<List<User>>(ViewBag.Users);
+                    var Users = JsonConvert.DeserializeObject<List<IdentityUser>>(ViewBag.Users);
                     @foreach (var user in Users)
                     {
-                        <option value="@user.UserName">@user.UserName</option>
+                        <option value="@user.Id">@user.UserName</option>
                     }
                 }
             </select>
@@ -46,13 +46,13 @@
         <h5>Invoice Out Line</h5><hr />
         <form>
             <label>Expence</label>
-            <select id="expance" class="custom-select mb-3">
+            <select id="expanceId" name="expenceId" class="custom-select mb-3">
                 @if (ViewBag.Expences != null)
                 {
                     var Expences = JsonConvert.DeserializeObject<List<Expence>>(ViewBag.Expences);
                     @foreach (var expence in Expences)
                     {
-                        <option asp-for="@expence.ExpenceName">@expence.ExpenceName</option>
+                        <option value="@expence.ExpenceId">@expence.ExpenceName</option>
                     }
                 }
             </select>
@@ -104,9 +104,9 @@
     var createBtn = document.querySelector("#create");
     var invoiceNo = document.querySelector("#invoiceNo");
     var date = document.querySelector("#date");
-    var firmName = document.querySelector("#firmName");
-    var userName = document.querySelector("#userName");
-    var expence = document.querySelector("#expance");
+    var firmId = document.querySelector("#firmId");
+    var userId = document.querySelector("#userId");
+    var expenceId = document.querySelector("#expanceId");
     var lineStatus = document.querySelector("#status2");
     var invoiceInStatus = document.querySelector("#invoiceInStatus");
     var tableRow = document.querySelector("table");
@@ -119,7 +119,8 @@
     }
     addDetails.addEventListener("click", (e) => {
         e.preventDefault();
-        var invoiceOutline = new invoiceOutLine(expence.value, parseFloat(price.value), parseInt(quantity.value), parseFloat(total.value), Boolean(lineStatus.checked));
+        var expenceName = expenceId.options[expenceId.selectedIndex].text;
+        var invoiceOutline = new invoiceOutLine(parseInt(expenceId.value), expenceName, parseFloat(price.value), parseInt(quantity.value), parseFloat(total.value), Boolean(lineStatus.checked));
         AddLS(invoiceOutline);
         clearInputs();
     });
@@ -143,7 +144,7 @@
     function AddLS(item) {
         list = getLS();
         list.push(item);
-        localStorage.setItem("invoiceOutLine",JSON.stringify(list));
+        localStorage.setItem("invoiceOutLine", JSON.stringify(list));
         load();
     }
     function load() {
@@ -152,7 +153,7 @@
             list.forEach(i => {
                 html += `
                  <tr>
-                   <td>${i.expence}</td>
+                   <td>${i.expenceName}</td>
                    <td>${i.quantity}</td>
                    <td>${i.price}</td>
                    <td>${i.total}</td>
@@ -166,13 +167,15 @@
     }
     class invoiceOutLine {
         id;
-        expence;
+        expenceId;
+        expenceName;
         price;
         quantity;
         total;
         status;
-        constructor(expence, price, quantity, total, status) {
-            this.expence = expence;
+        constructor(expenceId, expenceName, price, quantity, total, status) {
+            this.expenceId = expenceId;
+            this.expenceName = expenceName;
             this.price = price;
             this.total = total;
             this.quantity = quantity;
@@ -187,8 +190,8 @@
             InvoiceOut: {
                 "InvoiceNo": invoiceNo.value,
                 "Date": new Date(date.value),
-                "FirmName": firmName.value,
-                "UserName": userName.value,
+                "FirmId": parseInt(firmId.value),
+                "UserId": userId.value,
                 "Status": invoiceInStatus.checked,
             },
             InvoiceOutLines: getLS()
@@ -201,7 +204,8 @@
         fetch("https://localhost:5001/admin/InvoiceOutCreate", req)
             .then(response => {
                 if (response.ok) {
-                    alert("Successfully added");
+                    console.log("Successfully added");
+                    window.location.href = "/admin/invoiceOutList";
                 }
             })
             .catch(error => console.log(error));
@@ -212,10 +216,10 @@
     function clearInputs() {
         invoiceNo.value = "";
         date.value = "";
-        firmName.value = "";
-        userName.value = "";
+        firmId.value = "";
+        userId.value = "";
         invoiceInStatus.checked = false;
-        expence.value = "";
+        expenceId.value = "";
         quantity.value = "";
         price.value = "";
         total.value = "";

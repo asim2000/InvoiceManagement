@@ -1,1 +1,49 @@
-﻿<h1>InvoiceOutList</h1>
+﻿@model InvoiceOutListModel
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Date</th>
+            <th>Firm</th>
+            <th>User</th>
+            <th>IIStatus</th>
+            <th>Expence</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>IILStatus</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var invoiceOut in Model.InvoiceOuts)
+        {
+            foreach (var invoiceOutLine in invoiceOut.InvoiceOutLines)
+            {
+                <tr>
+                    <td>@invoiceOut.InvoiceOutNo</td>
+                    <td>@invoiceOut.InvoiceOutDate</td>
+                    <td>@invoiceOut.Firm.FirmName</td>
+                    <td>@invoiceOut.User.UserName</td>
+                    <td>@invoiceOut.InvoiceOutStatus</td>
+                    <td>@invoiceOutLine.Expence.ExpenceName</td>
+                    <td>@invoiceOutLine.InvoiceOutLineQuantity</td>
+                    <td>@invoiceOutLine.InvoiceOutLinePrice</td>
+                    <td>@invoiceOutLine.InvoiceOutLineTotal</td>
+                    <td>@invoiceOutLine.InvoiceOutLineStatus</td>
+                    <td>
+                        <form asp-controller="admin" asp-action="LoadInvoiceOutUpdatePage" method="post">
+                            <input type="hidden" name="invoiceOutId" value="@invoiceOut.InvoiceOutId" />
+                            <input type="hidden" name="invoiceOutLineId" value="@invoiceOutLine.InvoiceOutLineId" />
+                            <button type="submit" class="btn btn-block btn-primary">Edit</button>
+                        </form>
+                        <form asp-controller="admin" asp-action="InvoiceOutDelete" method="post">
+                            <input type="hidden" name="id" value="@invoiceOutLine.InvoiceOutLineId" />
+                            <button class="btn btn-block btn-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

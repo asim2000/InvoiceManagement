@@ -16,9 +16,11 @@ namespace Web.Models
         [Required]
         public DateTime Date { get; set; }
         [Required]
-        public string FirmName { get; set; }
+        public int FirmId { get; set; }
+        public Firm Firm { get; set; }
         [Required]
-        public string UserName { get; set; }
+        public string UserId { get; set; }
+        public IdentityUser User { get; set; }
         public bool Status { get; set; }
 
     }

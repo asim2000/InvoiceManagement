@@ -1,0 +1,90 @@
+﻿@model InvoiceOutUpdateModel
+<form asp-controller="admin" asp-action="InvoiceOutUpdate" method="post">
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Invoice In</h5><hr />
+            <input type="hidden" asp-for="@Model.InvoiceOut.InvoiceOutId" />
+            <div class="form-group">
+                <label>Invoice Number</label>
+                <input type="text" asp-for="@Model.InvoiceOut.InvoiceOutNo" id="invoiceNo" class="form-control" />
+                <span asp-validation-for="@Model.InvoiceOut.InvoiceOutNo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" asp-for="@Model.InvoiceOut.InvoiceOutDate" id="date" class="form-control" />
+                <span asp-validation-for="@Model.InvoiceOut.InvoiceOutDate" class="text-danger"></span>
+            </div>
+
+            <label>Firm Name</label>
+            <select asp-for="@Model.InvoiceOut.FirmId" class="custom-select mb-3">
+                @if (ViewBag.Firms != null)
+                {
+                    var Firms = JsonConvert.DeserializeObject<List<Firm>>(ViewBag.Firms);
+                    @foreach (var firm in Firms)
+                    {
+                        <option value="@firm.FirmId">@firm.FirmName</option>
+                    }
+                }
+
+            </select>
+            <label>User Name</label>
+            <select asp-for="@Model.InvoiceOut.UserId" class="custom-select mb-3">
+                @if (ViewBag.Users != null)
+                {
+                    var Users = JsonConvert.DeserializeObject<List<IdentityUser>>(ViewBag.Users);
+                    @foreach (var user in Users)
+                    {
+                        <option value="@user.Id">@user.UserName</option>
+                    }
+                }
+            </select>
+            <div class="custom-checkbox custom-control">
+                <input type="checkbox" asp-for="@Model.InvoiceOut.InvoiceOutStatus" id="invoiceInStatus" class="custom-control-input" />
+                <label for="invoiceInStatus" class="custom-control-label">Status</label>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <h5>Invoice In Line</h5><hr />
+            <input type="hidden" asp-for="@Model.InvoiceOutLine.InvoiceOutLineId" />
+            <label>Expence</label>
+            <select asp-for="@Model.InvoiceOutLine.ExpenceId" class="custom-select mb-3">
+                @if (ViewBag.Expences != null)
+                {
+                    var Expences = JsonConvert.DeserializeObject<List<Expence>>(ViewBag.Expences);
+                    @foreach (var expence in Expences)
+                    {
+                        <option value="@expence.ExpenceId">@expence.ExpenceName</option>
+                    }
+                }
+            </select>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input id="quantity" asp-for="@Model.InvoiceOutLine.InvoiceOutLineQuantity" type="number" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Price</label>
+                <input id="price" asp-for="@Model.InvoiceOutLine.InvoiceOutLinePrice" type="number" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Total</label>
+                <input id="total" asp-for="@Model.InvoiceOutLine.InvoiceOutLineTotal" type="number" class="form-control" />
+            </div>
+            <div class="custom-checkbox custom-control">
+                <input type="checkbox" asp-for="@Model.InvoiceOutLine.InvoiceOutLineStatus" id="status2" class="custom-control-input" />
+                <label for="status2" class="custom-control-label">Status</label>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-5">Save Changes</button>
+</form>
+
+<script>
+    var price = document.querySelector("#price");
+    var quantity = document.querySelector("#quantity");
+    price.addEventListener("keyup", calculateTotal);
+    quantity.addEventListener("keyup", calculateTotal);
+    function calculateTotal() {
+        total.value = document.querySelector("#price").value * document.querySelector("#quantity").value;
+    }
+</script>

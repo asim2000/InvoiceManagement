@@ -1,1 +1,49 @@
-﻿<h1>InvoiceInList</h1>
+﻿@model InvoiceInListModel
+    <table class="table table-bordered table-striped">
+       <thead>
+           <tr>
+               <th>No</th>
+               <th>Date</th>
+               <th>Firm</th>
+               <th>User</th>
+               <th>IIStatus</th>
+               <th>Expence</th>
+               <th>Quantity</th>
+               <th>Price</th>
+               <th>Total</th>
+               <th>IILStatus</th>
+               <th>Action</th>
+           </tr>
+       </thead>
+       <tbody>
+           @foreach (var invoiceIn in Model.InvoiceIns)
+           {
+               foreach (var invoiceInLine in invoiceIn.InvoiceInLines)
+               {
+                   <tr>
+                       <td>@invoiceIn.InvoiceInNo</td>
+                       <td>@invoiceIn.InvoiceInDate</td>
+                       <td>@invoiceIn.Firm.FirmName</td>
+                       <td>@invoiceIn.User.UserName</td>
+                       <td>@invoiceIn.InvoiceInStatus</td>
+                       <td>@invoiceInLine.Expence.ExpenceName</td>
+                       <td>@invoiceInLine.InvoiceInLineQuantity</td>
+                       <td>@invoiceInLine.InvoiceInLinePrice</td>
+                       <td>@invoiceInLine.InvoiceInLineTotal</td>
+                       <td>@invoiceInLine.InvoiceInLineStatus</td>
+                       <td>
+                           <form asp-controller="admin" asp-action="LoadInvoiceInUpdatePage" method="post">
+                               <input type="hidden" name="invoiceInId" value="@invoiceIn.InvoiceInId" />
+                               <input type="hidden" name="invoiceInLineId" value="@invoiceInLine.InvoiceInLineId" />
+                               <button type="submit" class="btn btn-block btn-primary">Edit</button>
+                           </form>
+                           <form asp-controller="admin" asp-action="InvoiceInDelete" method="post">
+                               <input type="hidden" name="id" value="@invoiceInLine.InvoiceInLineId" />
+                               <button class="btn btn-block btn-danger" type="submit">Delete</button>
+                           </form>
+                       </td>
+                   </tr>
+               }
+           }
+       </tbody>
+    </table>

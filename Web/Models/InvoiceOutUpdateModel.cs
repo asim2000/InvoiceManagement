@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Web.Models
 {
-    public class InvoiceInListModel
+    public class InvoiceOutUpdateModel
     {
-        public List<InvoiceIn> InvoiceIns { get; set; }
-
+        public InvoiceOut InvoiceOut { get; set; }
+        public InvoiceOutLine InvoiceOutLine { get; set; }
     }
 }

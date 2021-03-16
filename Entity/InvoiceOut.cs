@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -14,6 +15,7 @@ namespace Entity
         public int FirmId { get; set; }
         public Firm Firm { get; set; }
         public string UserId { get; set; }
+        public IdentityUser User { get; set; }
         public bool InvoiceOutStatus { get; set; }
         public List<InvoiceOutLine> InvoiceOutLines { get; set; }
     }

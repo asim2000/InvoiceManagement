@@ -7,5 +7,6 @@ namespace Data.Abstract
 {
     public interface IInvoiceInLineDal:IEntityRepository<InvoiceInLine>
     {
+        void Update(InvoiceInLine entity);
     }
 }

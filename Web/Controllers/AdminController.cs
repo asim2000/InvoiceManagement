@@ -39,18 +39,44 @@ namespace Web.Controllers
         //////// List ///////////
 
         [HttpGet]
-        public IActionResult InvoiceInList()
+        public async Task<IActionResult> InvoiceInList()
         {
-            var model = new List<InvoiceInListModel>()
+            var models = new InvoiceInListModel()
             {
-             
+                InvoiceIns = _invoiceInDal.GetAll(),
+                
             };
-            return View();
+            foreach (var invoiceIn in models.InvoiceIns)
+            {
+                invoiceIn.InvoiceInLines = _invoiceInLineDal.GetAll(i => i.InvoiceInId == invoiceIn.InvoiceInId);
+                invoiceIn.Firm = _firmDal.Get(i=>i.FirmId==invoiceIn.FirmId);
+                invoiceIn.User = await _userManager.FindByIdAsync(invoiceIn.UserId);
+                foreach (var invoiceInLine in invoiceIn.InvoiceInLines)
+                {
+                    invoiceInLine.Expence = _expenceDal.Get(i=>i.ExpenceId==invoiceInLine.ExpenceId);
+                }
+            }
+            return View(models);
         }
         [HttpGet]
-        public IActionResult InvoiceOutList()
+        public async Task<IActionResult> InvoiceOutList()
         {
-            return View();
+            var models = new InvoiceOutListModel()
+            {
+                InvoiceOuts = _invoiceOutDal.GetAll(),
+
+            };
+            foreach (var invoiceOut in models.InvoiceOuts)
+            {
+                invoiceOut.InvoiceOutLines = _invoiceOutLineDal.GetAll(i => i.InvoiceOutId == invoiceOut.InvoiceOutId);
+                invoiceOut.Firm = _firmDal.Get(i => i.FirmId == invoiceOut.FirmId);
+                invoiceOut.User = await _userManager.FindByIdAsync(invoiceOut.UserId);
+                foreach (var invoiceOutLine in invoiceOut.InvoiceOutLines)
+                {
+                    invoiceOutLine.Expence = _expenceDal.Get(i => i.ExpenceId == invoiceOutLine.ExpenceId);
+                }
+            }
+            return View(models);
         }
         [HttpGet]
         public IActionResult CashInList()
@@ -67,17 +93,15 @@ namespace Web.Controllers
         [HttpGet]
         public IActionResult InvoiceInCreate()
         {
-            ViewBag.Firms = JsonConvert.SerializeObject(_firmDal.GetAll());
-            ViewBag.Users= JsonConvert.SerializeObject(_userManager.Users);
-            ViewBag.Expences = JsonConvert.SerializeObject(_expenceDal.GetAll());
+            GetViewBag();
             return View();
         }
+        
+
         [HttpGet]
         public IActionResult InvoiceOutCreate()
         {
-            ViewBag.Firms = JsonConvert.SerializeObject(_firmDal.GetAll());
-            ViewBag.Users = JsonConvert.SerializeObject(_userManager.Users);
-            ViewBag.Expences = JsonConvert.SerializeObject(_expenceDal.GetAll());
+            GetViewBag();
             return View();
         }
         [HttpGet]
@@ -94,30 +118,33 @@ namespace Web.Controllers
         [HttpPost]
         public IActionResult InvoiceInCreate([FromBody]InvoiceInInvoiceInLineModel model)
         {
-            var invoiceIn = new InvoiceIn()
+            if (ModelState.IsValid)
             {
-                InvoiceInNo = model.InvoiceIn.InvoiceNo,
-                InvoiceInDate = model.InvoiceIn.Date,
-                FirmId = _firmDal.Get(f => f.FirmName == model.InvoiceIn.FirmName).FirmId,
-                UserId = _userManager.Users.FirstOrDefault(u => u.UserName == model.InvoiceIn.UserName).Id,
-                InvoiceInStatus = model.InvoiceIn.Status
-            };
-            _invoiceInDal.Add(invoiceIn);
-
-            foreach (var invoiceInLine in model.InvoiceInLine)
-            {
-                _invoiceInLineDal.Add(new InvoiceInLine()
+                var invoiceIn = new InvoiceIn()
                 {
-                    ExpenceId = _expenceDal.Get(e => e.ExpenceName == invoiceInLine.Expence).ExpenceId,
-                    InvoiceInLinePrice = invoiceInLine.Price,
-                    InvoiceInLineQuantity = invoiceInLine.Quantity,
-                    InvoiceInLineTotal = invoiceInLine.Total,
-                    InvoiceInLineStatus = invoiceInLine.Status,
-                    InvoiceInId=invoiceIn.InvoiceInId
-                });
-            }
-            return Redirect("/admin/invoiceInList");
+                    InvoiceInNo = model.InvoiceIn.InvoiceNo,
+                    InvoiceInDate = model.InvoiceIn.Date,
+                    FirmId = model.InvoiceIn.FirmId,
+                    UserId = model.InvoiceIn.UserId,
+                    InvoiceInStatus = model.InvoiceIn.Status
+                };
+                _invoiceInDal.Add(invoiceIn);
 
+                foreach (var invoiceInLine in model.InvoiceInLine)
+                {
+                    _invoiceInLineDal.Add(new InvoiceInLine()
+                    {
+                        ExpenceId = invoiceInLine.ExpenceId,
+                        InvoiceInLinePrice = invoiceInLine.Price,
+                        InvoiceInLineQuantity = invoiceInLine.Quantity,
+                        InvoiceInLineTotal = invoiceInLine.Total,
+                        InvoiceInLineStatus = invoiceInLine.Status,
+                        InvoiceInId = invoiceIn.InvoiceInId
+                    });
+                }
+                return RedirectToAction("invoiceInList");
+            }
+            return View(model);
         }
         [HttpPost]
         public IActionResult InvoiceOutCreate([FromBody] InvoiceOutInvoiceOutLineModel model)
@@ -126,8 +153,8 @@ namespace Web.Controllers
             {
                 InvoiceOutNo = model.InvoiceOut.InvoiceNo,
                 InvoiceOutDate = model.InvoiceOut.Date,
-                FirmId = _firmDal.Get(f => f.FirmName == model.InvoiceOut.FirmName).FirmId,
-                UserId = _userManager.Users.FirstOrDefault(u => u.UserName == model.InvoiceOut.UserName).Id,
+                FirmId = model.InvoiceOut.FirmId,
+                UserId = model.InvoiceOut.UserId,
                 InvoiceOutStatus = model.InvoiceOut.Status
             };
             _invoiceOutDal.Add(invoiceOut);
@@ -136,7 +163,7 @@ namespace Web.Controllers
             {
                 _invoiceOutLineDal.Add(new InvoiceOutLine()
                 {
-                    ExpenceId = _expenceDal.Get(e => e.ExpenceName == invoiceOutLine.Expence).ExpenceId,
+                    ExpenceId = invoiceOutLine.ExpenceId,
                     InvoiceOutLinePrice = invoiceOutLine.Price,
                     InvoiceOutLineQuantity = invoiceOutLine.Quantity,
                     InvoiceOutLineTotal = invoiceOutLine.Total,
@@ -144,7 +171,7 @@ namespace Web.Controllers
                     InvoiceOutId = invoiceOut.InvoiceOutId
                 });
             }
-            return Redirect("/admin/invoiceOutList");
+            return RedirectToAction("invoiceOutList");
         }
         //[HttpPost]
         //public IActionResult CashInCreate()
@@ -158,15 +185,35 @@ namespace Web.Controllers
         //}
 
         //////// Update ///////////
-        [HttpGet]
-        public IActionResult InvoiceInUpdate()
+        [HttpPost]
+        public async Task<IActionResult> LoadInvoiceInUpdatePage(int invoiceInId, int invoiceInLineId)
         {
-            return View();
+            GetViewBag();
+            var invoiceInUpdateModel = new InvoiceInUpdateModel() {
+                InvoiceIn = _invoiceInDal.Get(i => i.InvoiceInId == invoiceInId),
+                InvoiceInLine =_invoiceInLineDal.Get(i => i.InvoiceInLineId == invoiceInLineId && i.InvoiceInId == invoiceInId)
+        };
+            invoiceInUpdateModel.InvoiceIn.User = await _userManager.FindByIdAsync(invoiceInUpdateModel.InvoiceIn.UserId);
+            invoiceInUpdateModel.InvoiceIn.Firm = _firmDal.Get(i => i.FirmId == invoiceInUpdateModel.InvoiceIn.FirmId);
+
+            invoiceInUpdateModel.InvoiceInLine.Expence = _expenceDal.Get(i => i.ExpenceId == invoiceInUpdateModel.InvoiceInLine.ExpenceId);
+            return View(invoiceInUpdateModel);
         }
-        [HttpGet]
-        public IActionResult InvoiceOutUpdate()
+        [HttpPost]
+        public async Task<IActionResult> LoadInvoiceOutUpdatePage(int invoiceOutId, int invoiceOutLineId)
         {
-            return View();
+            GetViewBag();
+
+            var invoiceOutUpdateModel = new InvoiceOutUpdateModel()
+            {
+                InvoiceOut = _invoiceOutDal.Get(i => i.InvoiceOutId == invoiceOutId),
+                InvoiceOutLine = _invoiceOutLineDal.Get(i => i.InvoiceOutLineId == invoiceOutLineId && i.InvoiceOutId == invoiceOutId)
+            };
+            invoiceOutUpdateModel.InvoiceOut.User = await _userManager.FindByIdAsync(invoiceOutUpdateModel.InvoiceOut.UserId);
+            invoiceOutUpdateModel.InvoiceOut.Firm = _firmDal.Get(i => i.FirmId == invoiceOutUpdateModel.InvoiceOut.FirmId);
+
+            invoiceOutUpdateModel.InvoiceOutLine.Expence = _expenceDal.Get(i => i.ExpenceId == invoiceOutUpdateModel.InvoiceOutLine.ExpenceId);
+            return View(invoiceOutUpdateModel);
         }
         [HttpGet]
         public IActionResult CashInUpdate()
@@ -181,16 +228,66 @@ namespace Web.Controllers
 
 
 
-        //[HttpPost]
-        //public IActionResult InvoiceInUpdate()
-        //{
-        //    return View();
-        //}
-        //[HttpPost]
-        //public IActionResult InvoiceOutUpdate()
-        //{
-        //    return View();
-        //}
+        [HttpPost]
+        public IActionResult InvoiceInUpdate(InvoiceInUpdateModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var invoiceIn = new InvoiceIn()
+                {
+                    InvoiceInId = model.InvoiceIn.InvoiceInId,
+                    InvoiceInDate = model.InvoiceIn.InvoiceInDate,
+                    InvoiceInNo = model.InvoiceIn.InvoiceInNo,
+                    FirmId = model.InvoiceIn.FirmId,
+                    UserId = model.InvoiceIn.UserId,
+                    InvoiceInStatus = model.InvoiceIn.InvoiceInStatus
+                };
+                var invoiceInLine = new InvoiceInLine()
+                {
+                    InvoiceInLineId = model.InvoiceInLine.InvoiceInLineId,
+                    InvoiceInId = model.InvoiceInLine.InvoiceInId,
+                    ExpenceId = model.InvoiceInLine.ExpenceId,
+                    InvoiceInLineQuantity = model.InvoiceInLine.InvoiceInLineQuantity,
+                    InvoiceInLinePrice = model.InvoiceInLine.InvoiceInLinePrice,
+                    InvoiceInLineTotal = model.InvoiceInLine.InvoiceInLineTotal,
+                    InvoiceInLineStatus = model.InvoiceInLine.InvoiceInLineStatus
+                };
+                _invoiceInDal.Update(invoiceIn);
+                _invoiceInLineDal.Update(invoiceInLine);
+                return RedirectToAction("invoiceInList");
+            }
+            return View(model);
+        }
+        [HttpPost]
+        public IActionResult InvoiceOutUpdate(InvoiceOutUpdateModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var invoiceOut = new InvoiceOut()
+                {
+                    InvoiceOutId = model.InvoiceOut.InvoiceOutId,
+                    InvoiceOutDate = model.InvoiceOut.InvoiceOutDate,
+                    InvoiceOutNo = model.InvoiceOut.InvoiceOutNo,
+                    FirmId = model.InvoiceOut.FirmId,
+                    UserId = model.InvoiceOut.UserId,
+                    InvoiceOutStatus = model.InvoiceOut.InvoiceOutStatus
+                };
+                var invoiceOutLine = new InvoiceOutLine()
+                {
+                    InvoiceOutLineId = model.InvoiceOutLine.InvoiceOutLineId,
+                    InvoiceOutId = model.InvoiceOutLine.InvoiceOutId,
+                    ExpenceId = model.InvoiceOutLine.ExpenceId,
+                    InvoiceOutLineQuantity = model.InvoiceOutLine.InvoiceOutLineQuantity,
+                    InvoiceOutLinePrice = model.InvoiceOutLine.InvoiceOutLinePrice,
+                    InvoiceOutLineTotal = model.InvoiceOutLine.InvoiceOutLineTotal,
+                    InvoiceOutLineStatus = model.InvoiceOutLine.InvoiceOutLineStatus
+                };
+                _invoiceOutDal.Update(invoiceOut);
+                _invoiceOutLineDal.Update(invoiceOutLine);
+                return RedirectToAction("invoiceOutList");
+            }
+            return View(model);
+        }
         //[HttpPost]
         //public IActionResult CashInUpdate()
         //{
@@ -203,53 +300,33 @@ namespace Web.Controllers
         //}
 
         //////// Delete ///////////
-        [HttpGet]
+        [HttpPost]
         public IActionResult InvoiceInDelete(int id)
         {
-            return View();
+            _invoiceInLineDal.Delete(_invoiceInLineDal.Get(i=>i.InvoiceInLineId==id));
+            return RedirectToAction("invoiceInList");
         }
-        [HttpGet]
+        [HttpPost]
         public IActionResult InvoiceOutDelete(int id)
         {
-            return View();
+            _invoiceOutLineDal.Delete(_invoiceOutLineDal.Get(i => i.InvoiceOutLineId == id));
+            return RedirectToAction("invoiceOutList");
         }
-        [HttpGet]
+        [HttpPost]
         public IActionResult CashInDelete(int id)
         {
             return View();
         }
-        [HttpGet]
+        [HttpPost]
         public IActionResult CashOutDelete(int id)
         {
             return View();
         }
-
-
-        //[HttpPost]
-        //public IActionResult InvoiceInDelete(int id)
-        //{
-        //    return View();
-        //}
-        //[HttpPost]
-        //public IActionResult InvoiceOutDelete(int id)
-        //{
-        //    return View();
-        //}
-        //[HttpPost]
-        //public IActionResult CashInDelete(int id)
-        //{
-        //    return View();
-        //}
-        //[HttpPost]
-        //public IActionResult CashOutDelete(int id)
-        //{
-        //    return View();
-        //}
-        [HttpPost]
-        public IActionResult Index(InvoiceInModel model)
-        {
-            Console.WriteLine(model);
-            return Ok(model);
-        }
+private void GetViewBag()
+{
+    ViewBag.Firms = JsonConvert.SerializeObject(_firmDal.GetAll());
+    ViewBag.Users = JsonConvert.SerializeObject(_userManager.Users);
+    ViewBag.Expences = JsonConvert.SerializeObject(_expenceDal.GetAll());
+}
     }
 }
